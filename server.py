@@ -2,7 +2,7 @@
 server.py — PrimeAssist Flask server
 ==================================
 Serves the chat API and the static frontend.
-Chat history is saved to the  chat_history/  folder as JSON files.
+Chat history is saved to the chat_history/ folder as JSON files.
 Usage:  python server.py
 """
 
@@ -11,6 +11,8 @@ from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from app.rnn_matcher import RNNMatcher
 from app.conversation import handle
+
+MAX_MESSAGE_LEN = 2000  # characters; longer messages are rejected before model inference
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
@@ -75,6 +77,8 @@ def chat():
 
     if not user_msg:
         return jsonify({"reply": "Please type a message.", "intent": "", "confidence": 0})
+    if len(user_msg) > MAX_MESSAGE_LEN:
+        return jsonify({"error": f"Message exceeds {MAX_MESSAGE_LEN} characters."}), 413
 
     # Get RNN prediction (model will be loaded on first call)
     m = get_matcher()
